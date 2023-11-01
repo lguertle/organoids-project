@@ -87,17 +87,9 @@ def get_hard_disk_path():
 
     actual_path = None
     for path in paths:
-        try:
+        if os.path.exists(path):
             actual_path = path
             print(f"Successfully loaded data from {path}")
-            break
-        except FileNotFoundError:
-            print(f"{path} not found.")
-        except Exception as e:
-            print(f"Error while accessing {path}: {e}")
-
-    if actual_path is None:
-        print("Data could not be loaded from any known paths.")
     
     return actual_path
 
