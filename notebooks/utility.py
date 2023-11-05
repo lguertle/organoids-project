@@ -4,6 +4,7 @@ import xgboost as xgb
 import os
 import cv2
 import shap
+from scipy.stats import randint
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import accuracy_score, confusion_matrix, roc_auc_score, f1_score
 import seaborn as sns
@@ -13,7 +14,7 @@ from sklearn.utils.class_weight import compute_sample_weight
 import scikitplot as skplt
 from xgboost import plot_importance
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV
 from sklearn.impute import SimpleImputer
 from skimage import filters
 from scipy import ndimage
@@ -154,13 +155,13 @@ def load_data(path):
 
 def train_model(X_train, y_train, unique_labels, model):
     if model == "RandomForest":
-        best_params = {'max_depth': 3, 'min_samples_leaf': 1, 'min_samples_split': 2, 'n_estimators': 100}
+        best_params = {'max_depth': 6, 'min_samples_leaf': 2, 'min_samples_split': 7, 'n_estimators': 65}
         classifier = RandomForestClassifier(**best_params)
     elif model == "Xgboost":
-        best_params = {'eval_metric': 'rmsle', 'max_depth': 6, 'min_child_weight': 1, 'gamma': 0.0, 'subsample': 1.0, 'colsample_bytree': 1.0, 'alpha': 0, 'lambda': 1, 'seed': 0}
+        best_params = {'colsample_bytree': 0.3064379361316407, 'learning_rate': 0.030294308573206426, 'max_depth': 5, 'n_estimators': 252}
         classifier = xgb.XGBClassifier(objective='multi:softmax', num_class=len(unique_labels), **best_params)
     elif model == "Catboost":
-        best_params = {"learning_rate": 0.02926336556264219, "depth": 5, "subsample": 0.354186369696673, "colsample_bylevel": 0.8776827479004764, "min_data_in_leaf": 82}
+        best_params = {"learning_rate": 0.03514033339475594, "depth": 4, "subsample": 0.6983280497870886, "colsample_bylevel": 0.4327452011540816, "min_data_in_leaf": 12}
         classifier = CatBoostClassifier(iterations=1000, bootstrap_type="Bernoulli", verbose=False, **best_params)
     sample_weights = compute_sample_weight(class_weight='balanced', y=y_train)
     classifier.fit(X_train, y_train, sample_weight=sample_weights)
@@ -216,32 +217,39 @@ def plot_average_f1_scores(ranked_labels, average_f1_scores):
 
 
 
-def run_gridsearch_random_forest(X, y, random_state):
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_state, stratify=y)
+def run_randomsearch_random_forest(X, y, random_state):
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=random_state, stratify=y
+    )
     imputer = SimpleImputer(strategy='mean')
     X_train = imputer.fit_transform(X_train)
     X_test = imputer.transform(X_test)
-    print(np.any(np.isnan(X_train)))
-    print(np.any(np.isinf(X_train)))
-    classifier = RandomForestClassifier()
-    param_grid = {
-        'n_estimators': [20, 100],
-        'max_depth': [1, 2, 3],
-        'min_samples_split': [2, 5],
-        'min_samples_leaf': [1, 2]
+    
+    classifier = RandomForestClassifier(random_state=random_state)
+    param_dist = {
+        'n_estimators': randint(20, 200),  # Sample integer values between 20 and 200
+        'max_depth': randint(1, 10),        # Sample integer values between 1 and 10
+        'min_samples_split': randint(2, 10),  # Sample integer values between 2 and 10
+        'min_samples_leaf': randint(1, 5)    # Sample integer values between 1 and 5
     }
+    
     strat_kfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=random_state)
-    grid_search = GridSearchCV(
+    
+    random_search = RandomizedSearchCV(
         estimator=classifier,
-        param_grid=param_grid,
+        param_distributions=param_dist,
+        n_iter=100,  # Number of parameter settings to try
         scoring='roc_auc',
         cv=strat_kfold,
         n_jobs=-1,
-        verbose=3
+        verbose=3,
+        random_state=random_state
     )
+    
     sample_weights = compute_sample_weight(class_weight='balanced', y=y_train)
-    grid_search.fit(X_train, y_train, sample_weight=sample_weights)
-    return grid_search, X_test, y_test
+    random_search.fit(X_train, y_train, sample_weight=sample_weights)
+    
+    return random_search, X_test, y_test
 
 def evaluate_gridsearch(grid_search, X_test, y_test, unique_labels):
     eval_auc = roc_auc_score(y_test, grid_search.best_estimator_.predict_proba(X_test), multi_class='ovr')
