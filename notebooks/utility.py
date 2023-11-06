@@ -78,12 +78,18 @@ def plot_features_importance(classifier):
     plot_importance(classifier, ax=ax)
     plt.show()
 
-def get_hard_disk_path():
+def get_hard_disk_path(type):
     # List of potential paths
-    paths = [
-        "D:/data_for_seg/",
-        "E:/data_for_seg/"
-    ]
+    if type == "Segmentation":
+        paths = [
+            "D:/data_for_seg/",
+            "E:/data_for_seg/"
+        ]
+    elif type == "DL":
+        paths = [
+            "D:/data_for_DL_augmented/",
+            "E:/data_for_DL_augmented/"
+        ]
 
     actual_path = None
     for path in paths:
