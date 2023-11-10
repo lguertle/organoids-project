@@ -86,10 +86,15 @@ def get_hard_disk_path(type):
             "D:/data_for_seg/",
             "E:/data_for_seg/"
         ]
-    elif type == "DL":
+    elif type == "DL_augmented":
         paths = [
             "D:/data_for_DL_augmented/",
             "E:/data_for_DL_augmented/"
+        ]
+    elif type == "DL":
+        paths = [
+            "D:/data_for_DL/",
+            "E:/data_for_DL/"
         ]
 
     actual_path = None
@@ -265,3 +270,35 @@ def evaluate_gridsearch(grid_search, X_test, y_test, unique_labels):
     skplt.metrics.plot_roc(y_test, y_probas, figsize=(8, 6), title="ROC Curves")
     plt.show()
     return eval_auc, grid_search.best_params_
+
+
+def calculate_closest_boundary_distances(labels):
+    try:
+        regions = measure.regionprops(labels)
+        min_distances = []
+
+        for i, region1 in enumerate(regions):
+            min_distance = np.inf
+            boundary1 = np.array(region1.coords)
+
+            for j, region2 in enumerate(regions):
+                if i != j:
+                    boundary2 = np.array(region2.coords)
+
+                    # Compute all pairwise distances between boundary points
+                    distance_matrix = cdist(boundary1, boundary2)
+
+                    # Find the minimum distance to this region
+                    current_min_distance = np.min(distance_matrix)
+                    if current_min_distance < min_distance:
+                        min_distance = current_min_distance
+
+            if min_distance != np.inf:
+                min_distances.append(min_distance)
+
+        average_min_distance = np.mean(min_distances)
+
+        return average_min_distance
+
+    except:
+        return None
