@@ -23,6 +23,7 @@ from skimage import measure
 from skimage import exposure
 from cellpose import models
 from catboost import CatBoostClassifier
+from scipy.spatial.distance import cdist
 
 def compute_small_cell_labels(image):
 
@@ -164,16 +165,16 @@ def load_data(path):
     return X, y, unique_labels, label_mapping, data
 
 
-def train_model(X_train, y_train, unique_labels, model):
+def train_model(X_train, y_train, unique_labels, model, random_state=42):
     if model == "RandomForest":
         best_params = {'max_depth': 6, 'min_samples_leaf': 2, 'min_samples_split': 7, 'n_estimators': 65}
-        classifier = RandomForestClassifier(**best_params)
+        classifier = RandomForestClassifier(**best_params, random_state=random_state)
     elif model == "Xgboost":
         best_params = {'colsample_bytree': 0.3064379361316407, 'learning_rate': 0.030294308573206426, 'max_depth': 5, 'n_estimators': 252}
-        classifier = xgb.XGBClassifier(objective='multi:softmax', num_class=len(unique_labels), **best_params)
+        classifier = xgb.XGBClassifier(objective='multi:softmax', num_class=len(unique_labels), **best_params, random_state=random_state)
     elif model == "Catboost":
         best_params = {"learning_rate": 0.03514033339475594, "depth": 4, "subsample": 0.6983280497870886, "colsample_bylevel": 0.4327452011540816, "min_data_in_leaf": 12}
-        classifier = CatBoostClassifier(iterations=1000, bootstrap_type="Bernoulli", verbose=False, **best_params)
+        classifier = CatBoostClassifier(iterations=1000, bootstrap_type="Bernoulli", verbose=False, **best_params, random_state=random_state)
     sample_weights = compute_sample_weight(class_weight='balanced', y=y_train)
     classifier.fit(X_train, y_train, sample_weight=sample_weights)
     return classifier
