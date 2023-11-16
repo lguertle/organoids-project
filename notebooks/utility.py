@@ -155,8 +155,8 @@ def visualize_correlation(df):
     plt.title('Feature Correlation')
     plt.show()
 
-def load_data(path):
-    data = pd.read_csv(path + "statistics_features_test.csv")
+def load_data(path, csv_name):
+    data = pd.read_csv(path + csv_name)
     X = data.iloc[:, 2:]
     y = data.iloc[:, 1]
     unique_labels = y.unique()
