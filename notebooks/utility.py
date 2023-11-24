@@ -81,7 +81,7 @@ def compute_big_cell_labels(image):
     plt.subplot(324)
     plt.title('4. Filled Holes')
     plt.imshow(filled_holes, cmap='gray')
-
+    
     # Step 5: Remove small holes
     width = 10
     remove_holes = morphology.remove_small_holes(filled_holes, width ** 3)
@@ -94,7 +94,7 @@ def compute_big_cell_labels(image):
     plt.subplot(326)
     plt.title('6. Removed Small Objects')
     plt.imshow(remove_objects, cmap='gray')
-
+    
     plt.tight_layout()
     plt.show()
 
@@ -131,6 +131,11 @@ def get_hard_disk_path(type):
         paths = [
             "D:/data_for_DL/",
             "E:/data_for_DL/"
+        ]
+    elif type == "Laure":
+        paths = [
+            "D:/mouse_organoids_laure/",
+            "E:/mouse_organoids_laure/"
         ]
 
     actual_path = None
