@@ -65,7 +65,7 @@ def compute_big_cell_labels(image):
     plt.imshow(denoised, cmap='gray')
 
     # Step 2: Thresholding
-    _, li_thresholded = cv2.threshold(image, 50, 255, cv2.THRESH_BINARY)
+    _, li_thresholded = cv2.threshold(image, 80, 255, cv2.THRESH_BINARY)
     plt.subplot(322)
     plt.title('2. Thresholded Image')
     plt.imshow(li_thresholded, cmap='gray')
