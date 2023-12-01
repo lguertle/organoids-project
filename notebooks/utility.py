@@ -52,59 +52,22 @@ def get_shap(model, X_test):
 
 
 def compute_big_cell_labels(image):
-    
-    plt.figure(figsize=(10, 10))
-    plt.title('0. Image')
-    plt.imshow(image, cmap='gray')
 
-    # Step 1: Median filter
     denoised = ndimage.median_filter(image, size=3)
-    plt.figure(figsize=(10, 10))
-    plt.subplot(321)
-    plt.title('1. Denoised Image')
-    plt.imshow(denoised, cmap='gray')
+    li_thresholded = denoised > filters.threshold_li(denoised)
 
-    # Step 2: Thresholding
-    _, li_thresholded = cv2.threshold(image, 80, 255, cv2.THRESH_BINARY)
-    plt.subplot(322)
-    plt.title('2. Thresholded Image')
-    plt.imshow(li_thresholded, cmap='gray')
-
-    # Step 3: Invert Threshold
     li_thresholded = np.array([[not cell for cell in row] for row in li_thresholded])
-    plt.subplot(323)
-    plt.title('3. Inverted Threshold')
-    plt.imshow(li_thresholded, cmap='gray')
 
-    # Step 4: Fill holes
-    filled_holes = ndimage.binary_fill_holes(li_thresholded).astype(bool)
-    plt.subplot(324)
-    plt.title('4. Filled Holes')
-    plt.imshow(filled_holes, cmap='gray')
-    
-    # Step 5: Remove small holes
+    li_thresholded = ndimage.binary_fill_holes(li_thresholded).astype(bool)
+
     width = 10
-    remove_holes = morphology.remove_small_holes(filled_holes, width ** 3)
-    plt.subplot(325)
-    plt.title('5. Removed Small Holes')
-    plt.imshow(remove_holes, cmap='gray')
 
-    # Step 6: Remove small objects
+    remove_holes = morphology.remove_small_holes(li_thresholded, width ** 3)
+
     remove_objects = morphology.remove_small_objects(remove_holes, width ** 3)
-    plt.subplot(326)
-    plt.title('6. Removed Small Objects')
-    plt.imshow(remove_objects, cmap='gray')
-    
-    plt.tight_layout()
-    plt.show()
 
-    # Step 7: Label the objects
     labels = measure.label(remove_objects)
-    plt.figure(figsize=(5, 5))
-    plt.title('7. Labeled Image')
-    plt.imshow(labels, cmap='nipy_spectral')
 
-    plt.show()
     return labels
 
 def plot_features_importance(classifier):
@@ -136,6 +99,11 @@ def get_hard_disk_path(type):
         paths = [
             "D:/mouse_organoids_laure/",
             "E:/mouse_organoids_laure/"
+        ]
+    elif type == "segmentation_without_dead":
+        paths = [
+            "D:/data_for_seg_without_dead/",
+            "E:/data_for_seg_without_dead/"
         ]
 
     actual_path = None
