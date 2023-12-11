@@ -70,6 +70,18 @@ def create_well_grid(image_path, num_rows, num_columns):
             showlegend=False
         )
     )
+        
+        fig.add_shape(
+        type="rect",
+        x0=-1,  # Starting x (adjusted to be slightly outside the first well)
+        y0=num_rows,  # Starting y (adjusted to be slightly above the top row)
+        x1=num_columns,  # Ending x (adjusted to be slightly outside the last well in a row)
+        y1=-1,  # Ending y (adjusted to be slightly below the bottom row)
+        line=dict(
+            color="Black",
+            width=3,
+        ),
+    )
 
     # Add images for each well
     for x, y in zip(x_coords, y_coords):
@@ -142,19 +154,6 @@ def get_layout(image_path, num_rows, num_columns):
             html.Div(
                 style={'width': '30%', 'padding': '10px', 'border-left': '2px solid #ddd'},  # Sidebar style
                 children=[
-                    html.Div([
-                    "Number of Rows: ",
-                    dcc.Input(id='num-rows-input', type='number', value=10, min=1)  # Default value set to 10
-                    ]),
-
-                    # Input for number of columns
-                    html.Div([
-                        "Number of Columns: ",
-                        dcc.Input(id='num-columns-input', type='number', value=10, min=1)  # Default value set to 10
-                    ]),
-
-                    # Button to update the plot
-                    html.Button('Update Plot', id='update-plot-button'),
                     dcc.Dropdown(
                     id='well-selector',
                     options=[{'label': well, 'value': well} for well in wells],
@@ -186,51 +185,11 @@ def get_layout(image_path, num_rows, num_columns):
                     ),
                     html.Button('Update Wells', id='update-button'),
                     html.Div(id='categorization-output'),
-                    html.Div(id='click-data', children=[])
+                    html.Div(id='click-data', children=[]),
+                    html.Button("Clear Annotations", id="clear-annotations-button"),
+                    html.Img(id='organoid-image', src='c:/Users/lguertle/organoids-project/user_interface_app/src/../assets/organoids/s07.jpg', style={'max-width': '100%', 'height': 'auto'})
                     ]
             )
         ]
     )
     return layout
-
-
-
-
-"""
-    layout = html.Div([
-        html.H1(f"Grid with {num_rows}x{num_columns} Wells"),
-        dcc.Graph(id='well-plot', figure=create_well_grid(image_path, num_rows, num_columns), config={'autosizable': True}),
-        dcc.Dropdown(
-        id='well-selector',
-        options=[{'label': well, 'value': well} for well in wells],
-        value=[],  # Default value or initial selection
-        multi=True  # Allow multiple selections
-        ),
-        html.Div([
-        dcc.Input(id='run-name-input', type='text', placeholder='Enter run name'),
-        html.Button('Save Run', id='save-run-button'),
-        ]),
-        html.Div(id='save-status'),
-        html.Div([
-        dcc.Dropdown(
-            id='saved-runs-dropdown',
-            options=[{'label': run, 'value': run} for run in utils.list_saved_runs()],
-            placeholder='Select a Run'
-        ),
-        html.Button('Load Run', id='load-run-button'),
-        ]),
-        dcc.Store(id='well-categorizations', storage_type='memory'),
-        dcc.Input(id='selected-wells', style={'display': 'none'}),
-        html.Label("Categorize as:"),
-        dcc.RadioItems(
-            id='well-category',
-            options=[
-                {'label': 'Control', 'value': 'control'},
-                {'label': 'Treated', 'value': 'treated'}
-            ]
-        ),
-        html.Button('Update Wells', id='update-button'),
-        html.Div(id='categorization-output'),
-        html.Div(id='click-data', children=[])
-    ])
-"""
