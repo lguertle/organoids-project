@@ -8,6 +8,7 @@ import random
 from utils import utils
 
 def create_well_grid(image_path, num_rows, num_columns):
+    size_ratio = 1.5
     # Generate coordinates for the wells in a 4x4 grid
     x_coords = np.tile(np.arange(num_columns), num_rows)
     y_coords = np.repeat(np.arange(num_rows)[::-1], num_columns)  # Invert y-axis
@@ -21,7 +22,8 @@ def create_well_grid(image_path, num_rows, num_columns):
         marker=dict(size=40, opacity=0),  # Make markers invisible
         showlegend=False,
         text=[f'Well {i+1}' for i in range(len(x_coords))],
-        customdata=[f'Well {i+1}' for i in range(len(x_coords))]
+        customdata=[f'Well {i+1}' for i in range(len(x_coords))],
+        hoverlabel = dict(namelength=0)
     ))
 
     labels = ["dead", "keep2", "reseed1", "split", "empty", "keep0", "keep1", "reseed0"]
@@ -41,7 +43,7 @@ def create_well_grid(image_path, num_rows, num_columns):
     # Randomly assign labels to each well
     well_labels = [random.choice(labels) for _ in x_coords]
 
-    r = 0.2
+    r = 0.2 * size_ratio
     line_thickness = 4
     for (x, y, label) in zip(x_coords, y_coords, well_labels):
         color = label_color_mapping[label]
@@ -58,18 +60,6 @@ def create_well_grid(image_path, num_rows, num_columns):
                 showlegend=False
             )
         )
-
-        # Add invisible markers for hover info
-        fig.add_trace(go.Scatter(
-            x=[x], 
-            y=[y],
-            text=[label],  # Set the hover text to the well label
-            mode='markers',
-            marker=dict(color=color, size=1, opacity=0),  # Invisible marker
-            hoverinfo='text',
-            showlegend=False
-        )
-    )
         
         fig.add_shape(
         type="rect",
@@ -90,16 +80,15 @@ def create_well_grid(image_path, num_rows, num_columns):
                 source=Image.open(image_path),  # Path to your well image
                 xref="x",
                 yref="y",
-                x=x - 0.5,  # Adjust for correct alignment
-                y=y + 0.5,  # Adjust for correct alignment
-                sizex=1,  # Size of the image in x-axis units
-                sizey=1,  # Size of the image in y-axis units
+                x=x - 0.5 * size_ratio,  # Adjust for correct alignment
+                y=y + 0.5 * size_ratio,  # Adjust for correct alignment
+                sizex=1 * size_ratio,  # Size of the image in x-axis units
+                sizey=1 * size_ratio,  # Size of the image in y-axis units
                 sizing="contain",
                 layer="below"
             )
         )
 
-    
     # Add a scatter trace for each unique label to create legend entries
     for label, color in label_color_mapping.items():
         fig.add_trace(go.Scatter(
@@ -152,44 +141,73 @@ def get_layout(image_path, num_rows, num_columns):
 
             # Right part - Controls and options
             html.Div(
-                style={'width': '30%', 'padding': '10px', 'border-left': '2px solid #ddd'},  # Sidebar style
-                children=[
-                    dcc.Dropdown(
-                    id='well-selector',
-                    options=[{'label': well, 'value': well} for well in wells],
-                    value=[],  # Default value or initial selection
-                    multi=True  # Allow multiple selections
-                    ),
-                    html.Div([
-                    dcc.Input(id='run-name-input', type='text', placeholder='Enter run name'),
-                    html.Button('Save Run', id='save-run-button'),
-                    ]),
-                    html.Div(id='save-status'),
-                    html.Div([
+            style={'width': '30%', 'padding': '20px', 'border-left': '2px solid #ddd'},  # Adjusted sidebar style
+            children=[
+                # Run name input and save button
+                html.Div([
+                    dcc.Input(id='run-name-input', type='text', placeholder='Enter run name', style={'margin-right': '10px'}),
+                    html.Button('Save Run', id='save-run-button')
+                ], style={'display': 'flex', 'align-items': 'center', 'margin-bottom': '10px'}),
+
+                # Save status message
+                html.Div(id='save-status', style={'margin-bottom': '20px'}),
+
+                # Saved runs dropdown and refresh button
+                html.Div([
                     dcc.Dropdown(
                         id='saved-runs-dropdown',
                         options=[{'label': run, 'value': run} for run in utils.list_saved_runs()],
-                        placeholder='Select a Run'
+                        placeholder='Select a Run',
+                        style={'width': '70%', 'margin-right': '10px'}
                     ),
-                    html.Button('Load Run', id='load-run-button'),
-                    ]),
+                    html.Button("Refresh Runs", id="refresh-runs-button")
+                ], style={'display': 'flex', 'align-items': 'center', 'margin-bottom': '10px'}),
+
+                # Load run button
+                html.Button('Load Run', id='load-run-button', style={'width': '100%', 'margin-bottom': '20px'}),
+
+                html.Div([
                     dcc.Store(id='well-categorizations', storage_type='memory'),
-                    dcc.Input(id='selected-wells', style={'display': 'none'}),
-                    html.Label("Categorize as:"),
+                    dcc.Input(id='selected-wells', style={'display': 'none'})
+                ]),
+
+                                # Well selector dropdown
+                html.Div([
+                    html.Label("Select Wells:", style={'margin-bottom': '5px', 'font-weight': 'bold'}),
+                    dcc.Dropdown(
+                        id='well-selector',
+                        options=[{'label': well, 'value': well} for well in wells],
+                        value=[],  # Default value or initial selection
+                        multi=True,  # Allow multiple selections
+                        style={'margin-bottom': '20px'}  # Spacing after the dropdown
+                    )
+                ]),
+
+                # Categorization controls
+                html.Div([
+                    html.Label("Categorize as:", style={'font-weight': 'bold'}),
                     dcc.RadioItems(
                         id='well-category',
                         options=[
                             {'label': 'Control', 'value': 'control'},
                             {'label': 'Treated', 'value': 'treated'}
-                        ]
+                        ],
+                        style={'margin-bottom': '20px'}
                     ),
-                    html.Button('Update Wells', id='update-button'),
-                    html.Div(id='categorization-output'),
-                    html.Div(id='click-data', children=[]),
-                    html.Button("Clear Annotations", id="clear-annotations-button"),
-                    html.Img(id='organoid-image', src='c:/Users/lguertle/organoids-project/user_interface_app/src/../assets/organoids/s07.jpg', style={'max-width': '100%', 'height': 'auto'})
-                    ]
-            )
-        ]
-    )
+                    html.Button('Update Wells', id='update-button', style={'width': '100%', 'margin-bottom': '20px'})
+                ]),
+                html.Div(id='categorization-output'),
+                html.Div(id='click-data', children=[]),
+
+                # Clear annotations button
+                html.Button("Clear Annotations", id="clear-annotations-button", style={'width': '100%', 'margin-bottom': '20px'}),
+                # Title of the image
+                html.Div(id='image-title', style={'font-size': '20px', 'text-align': 'center', 'font-weight': 'bold', 'margin-top': '5px'}),
+                # Image display
+                html.Img(id='organoid-image', src='', style={'max-width': '100%', 'height': 'auto', 'display': 'block', 'margin-left': 'auto', 'margin-right': 'auto'}),
+            ]
+        )
+
+        # ... [rest of your layout] ...
+    ])
     return layout

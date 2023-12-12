@@ -7,6 +7,6 @@ def resize_image(input_path, output_path, size):
     image = image.resize(size, Image.Resampling.LANCZOS)
     image.save(output_path)
 
-def list_saved_runs(directory="."):
+def list_saved_runs(directory="./runs"):
     files = os.listdir(directory)
     return [file for file in files if file.endswith('.json')]
