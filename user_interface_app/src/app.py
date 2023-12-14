@@ -16,7 +16,8 @@ from layouts import main_layout
 from utils import utils
 
 num_columns = 12
-num_rows = 8
+num_rows = 10
+size_ratio = 5/np.log(num_columns*num_rows)
 
 # Initialize the Dash app
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -25,7 +26,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 # Load the image
 image_path = os.path.join(script_dir, '..', 'assets', 'images', 'well.png')
 
-app.layout = main_layout.get_layout(image_path, num_rows, num_columns)
+app.layout = main_layout.get_layout(image_path, num_rows, num_columns, size_ratio)
 
 @app.callback(
     Output('organoid-image', 'src'),
@@ -74,7 +75,8 @@ def handle_buttons(update_clicks, clear_clicks, load_clicks, save_clicks,
 
     if button_id == 'clear-annotations-button':
         # Clear annotations and reset categorizations
-        fig.layout["annotations"] = []
+        new_annotations = [anno for anno in fig.layout.annotations if not utils.is_not_single_letter_or_number(anno["text"])]
+        fig.update_layout(annotations=new_annotations)
         categorizations = {}
         status_message = "Categorizations cleared."
         return fig, categorizations, status_message
@@ -105,25 +107,30 @@ def handle_buttons(update_clicks, clear_clicks, load_clicks, save_clicks,
 
     if categorizations and fig:
         for well, category in categorizations.items():
-            well_index = int(well.split()[1]) - 1  # Convert to 0-based index
+            # Extract the row letter and column number from the well identifier
+            row_letter = well[0]  # The first character is the row letter
+            col_number = int(well[1:])  # The rest of the string is the column number
 
-            # Calculate the row and column for this well
-            row = well_index // num_columns
-            col = well_index % num_columns
+            # Convert the row letter to a row index (0-based)
+            row = ord(row_letter.upper()) - ord('A')  # 'A' becomes 0, 'B' becomes 1, etc.
+
+            # Adjust column number to be 0-based
+            col = col_number - 1
 
             # Determine the position of the well on the plot
+            # Invert y-axis to match the typical layout of a well plate
             x_position = col
-            y_position = num_rows - 1 - row  # Subtract from num_rows - 1 to invert y-axis
+            y_position = num_rows - 1 - row
 
             # Add or update annotation
             fig.add_annotation(
-                x=x_position, 
-                y=y_position, 
+                x=x_position*size_ratio, 
+                y=y_position*size_ratio, 
                 text=category, 
                 showarrow=False, 
-                yshift=30,  # Adjust yshift for positioning
+                yshift=20*size_ratio,  # Adjust yshift for positioning
                 font=dict(
-                    size=12,  # Adjust font size
+                    size=10*size_ratio,  # Adjust font size
                     color="black"  # Adjust font color
                 ),
                 align="center",  # Align text

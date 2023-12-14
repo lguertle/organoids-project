@@ -31,7 +31,7 @@ def compute_small_cell_labels(image):
     equalized_image = exposure.equalize_hist(image)
     
     # Segment the cells in the enhanced image using the Cellpose method
-    model = models.Cellpose(gpu=False, model_type='cyto')
+    model = models.Cellpose(gpu=False, model_type='cyto2')
     
     # Run the model on the equalized image
     masks, flows, styles, diams = model.eval(equalized_image, diameter=None, channels=[0,0])

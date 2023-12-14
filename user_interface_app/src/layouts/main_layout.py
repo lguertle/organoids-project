@@ -5,13 +5,15 @@ from dash import html, dcc
 import os
 from PIL import Image
 import random
+import sys
+import os.path
+sys.path.append(
+    os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 from utils import utils
 
-def create_well_grid(image_path, num_rows, num_columns):
-    size_ratio = 1.5
-    # Generate coordinates for the wells in a 4x4 grid
-    x_coords = np.tile(np.arange(num_columns), num_rows)
-    y_coords = np.repeat(np.arange(num_rows)[::-1], num_columns)  # Invert y-axis
+def create_well_grid(image_path, num_rows, num_columns, size_ratio):
+    x_coords = np.tile(np.arange(num_columns), num_rows) * size_ratio
+    y_coords = np.repeat(np.arange(num_rows)[::-1], num_columns) * size_ratio
 
 
     # Create a blank scatter plot
@@ -21,9 +23,10 @@ def create_well_grid(image_path, num_rows, num_columns):
         mode='markers',
         marker=dict(size=40, opacity=0),  # Make markers invisible
         showlegend=False,
-        text=[f'Well {i+1}' for i in range(len(x_coords))],
+        text = utils.generate_well_annotations(num_rows, num_columns),
         customdata=[f'Well {i+1}' for i in range(len(x_coords))],
-        hoverlabel = dict(namelength=0)
+        hoverlabel = dict(namelength=0),
+        hoverinfo="text"
     ))
 
     labels = ["dead", "keep2", "reseed1", "split", "empty", "keep0", "keep1", "reseed0"]
@@ -43,7 +46,7 @@ def create_well_grid(image_path, num_rows, num_columns):
     # Randomly assign labels to each well
     well_labels = [random.choice(labels) for _ in x_coords]
 
-    r = 0.2 * size_ratio
+    r = 0.3 * size_ratio
     line_thickness = 4
     for (x, y, label) in zip(x_coords, y_coords, well_labels):
         color = label_color_mapping[label]
@@ -63,16 +66,16 @@ def create_well_grid(image_path, num_rows, num_columns):
         
         fig.add_shape(
         type="rect",
-        x0=-1,  # Starting x (adjusted to be slightly outside the first well)
-        y0=num_rows,  # Starting y (adjusted to be slightly above the top row)
-        x1=num_columns,  # Ending x (adjusted to be slightly outside the last well in a row)
-        y1=-1,  # Ending y (adjusted to be slightly below the bottom row)
+        x0=-1.5 * size_ratio,  # Starting x (adjusted to be slightly outside the first well)
+        y0=(num_rows+0.5) * size_ratio,  # Starting y (adjusted to be slightly above the top row)
+        x1=(num_columns+0.5) * size_ratio,  # Ending x (adjusted to be slightly outside the last well in a row)
+        y1=-1.5 * size_ratio,  # Ending y (adjusted to be slightly below the bottom row)
         line=dict(
             color="Black",
             width=3,
         ),
     )
-
+    
     # Add images for each well
     for x, y in zip(x_coords, y_coords):
         fig.add_layout_image(
@@ -80,15 +83,15 @@ def create_well_grid(image_path, num_rows, num_columns):
                 source=Image.open(image_path),  # Path to your well image
                 xref="x",
                 yref="y",
-                x=x - 0.5 * size_ratio,  # Adjust for correct alignment
-                y=y + 0.5 * size_ratio,  # Adjust for correct alignment
-                sizex=1 * size_ratio,  # Size of the image in x-axis units
-                sizey=1 * size_ratio,  # Size of the image in y-axis units
+                x=x - 0.75 * size_ratio,  # Adjust for correct alignment
+                y=y + 0.75 * size_ratio,  # Adjust for correct alignment
+                sizex=1.5 * size_ratio,  # Size of the image in x-axis units
+                sizey=1.5 * size_ratio,  # Size of the image in y-axis units
                 sizing="contain",
                 layer="below"
             )
         )
-
+    
     # Add a scatter trace for each unique label to create legend entries
     for label, color in label_color_mapping.items():
         fig.add_trace(go.Scatter(
@@ -100,7 +103,7 @@ def create_well_grid(image_path, num_rows, num_columns):
             showlegend=True
         ))
     
-    fig_width, fig_height = 100 * num_columns, 100 * num_rows
+    fig_width, fig_height = 100 * num_columns * size_ratio, 100 * num_rows * size_ratio
     # Update the layout for the legend
     fig.update_layout(
         margin=dict(r=160),  # Adjust right margin to fit legend
@@ -114,18 +117,54 @@ def create_well_grid(image_path, num_rows, num_columns):
             bordercolor='Black',
             borderwidth=2,
         ),
-        width=max(fig_width, 400),  # Set a minimum figure width
-        height=max(fig_height, 400),  # Set a minimum figure height
+        width=1200,  # Width between 400 and max_width
+        height=800,  # Height between 400 and max_height
         xaxis=dict(range=[-1, num_columns], showgrid=False, zeroline=False, visible=False),
         yaxis=dict(range=[-1, num_rows], showgrid=False, zeroline=False, visible=False, scaleanchor='x', scaleratio=1),
         plot_bgcolor='white'
     )
+    fig['layout']['xaxis'].update(autorange = True)
+    fig['layout']['yaxis'].update(autorange = True)
+
+    row_labels = [chr(65 + i) for i in range(num_rows)][::-1] 
+    for i, label in enumerate(row_labels):
+        fig.add_annotation(
+            x=-1 * size_ratio,  # Adjust x position for the row labels
+            y=i * size_ratio,
+            xref='x',
+            yref='y',
+            text=label,
+            showarrow=False,
+            yanchor='middle',
+            font=dict(
+                    size=16*size_ratio,  # Adjust font size
+                    color="black",  # Adjust font color
+                    family="Arial"
+                ),
+        )
+
+    # Add column labels (1, 2, 3, ...)
+    for i in range(num_columns):
+        fig.add_annotation(
+            x=i * size_ratio,
+            y=num_rows * size_ratio,  # Adjust y position for the column labels
+            xref='x',
+            yref='y',
+            text=str(i + 1),
+            showarrow=False,
+            xanchor='center',
+            font=dict(
+                    size=16*size_ratio,  # Adjust font size
+                    color="black",  # Adjust font color
+                    family="Arial"
+                ),
+        )
 
 
     return fig
 
-def get_layout(image_path, num_rows, num_columns):
-    wells = [f"Well {i}" for i in range(1, num_rows*num_columns+1)]
+def get_layout(image_path, num_rows, num_columns, size_ratio):
+    wells = utils.generate_well_annotations(num_rows, num_columns)
 
     layout = html.Div(
         style={'display': 'flex', 'flex-direction': 'row'},  # Horizontal layout
@@ -135,7 +174,7 @@ def get_layout(image_path, num_rows, num_columns):
                 style={'width': '70%', 'padding': '10px'},  # Adjust width as needed
                 children=[
                     html.H1(f"Grid with {num_rows}x{num_columns} Wells"),
-                    dcc.Graph(id='well-plot', figure=create_well_grid(image_path, num_rows, num_columns), config={'autosizable': True})
+                    dcc.Graph(id='well-plot', figure=create_well_grid(image_path, num_rows, num_columns, size_ratio), config={'autosizable': True})
                 ]
             ),
 
@@ -174,25 +213,23 @@ def get_layout(image_path, num_rows, num_columns):
                                 # Well selector dropdown
                 html.Div([
                     html.Label("Select Wells:", style={'margin-bottom': '5px', 'font-weight': 'bold'}),
+                    # In your layout
                     dcc.Dropdown(
                         id='well-selector',
                         options=[{'label': well, 'value': well} for well in wells],
                         value=[],  # Default value or initial selection
                         multi=True,  # Allow multiple selections
-                        style={'margin-bottom': '20px'}  # Spacing after the dropdown
                     )
                 ]),
 
                 # Categorization controls
                 html.Div([
                     html.Label("Categorize as:", style={'font-weight': 'bold'}),
-                    dcc.RadioItems(
+                    dcc.Input(
                         id='well-category',
-                        options=[
-                            {'label': 'Control', 'value': 'control'},
-                            {'label': 'Treated', 'value': 'treated'}
-                        ],
-                        style={'margin-bottom': '20px'}
+                        type='text',
+                        placeholder='Enter custom annotation',
+                        style={'margin-bottom': '20px', 'width': '100%'}  # Full width input field
                     ),
                     html.Button('Update Wells', id='update-button', style={'width': '100%', 'margin-bottom': '20px'})
                 ]),
