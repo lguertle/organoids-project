@@ -24,6 +24,7 @@ from skimage import exposure
 from cellpose import models
 from catboost import CatBoostClassifier
 from scipy.spatial.distance import cdist
+from skimage import exposure, morphology, feature
 
 def compute_small_cell_labels(image):
 
@@ -53,22 +54,28 @@ def get_shap(model, X_test):
 
 def compute_big_cell_labels(image):
 
-    denoised = ndimage.median_filter(image, size=3)
-    li_thresholded = denoised > filters.threshold_li(denoised)
+    # Enhance contrast using histogram equalization
+    image_enhanced = exposure.equalize_adapthist(image)
 
-    li_thresholded = np.array([[not cell for cell in row] for row in li_thresholded])
+    # Apply Gaussian blur to reduce noise
+    image_smoothed = ndimage.gaussian_filter(image_enhanced, sigma=2)
 
-    li_thresholded = ndimage.binary_fill_holes(li_thresholded).astype(bool)
+    # Fine-tune the Canny edge detector parameters
+    edges_fine = feature.canny(image_smoothed, sigma=1)
 
-    width = 10
+    # Perform morphological closing to close small holes in the edges
+    edges_closed = ndimage.binary_closing(edges_fine, structure=np.ones((5,5)))
 
-    remove_holes = morphology.remove_small_holes(li_thresholded, width ** 3)
+    # Fill the holes in the edges image
+    edges_filled_fine = ndimage.binary_fill_holes(edges_closed).astype(bool)
 
-    remove_objects = morphology.remove_small_objects(remove_holes, width ** 3)
+    # Remove small objects from the filled edges image
+    remove_objects_edges_fine = morphology.remove_small_objects(edges_filled_fine, 10**3)
 
-    labels = measure.label(remove_objects)
+    # Label the objects in the edges filled image
+    labels_edges_fine = measure.label(remove_objects_edges_fine)
 
-    return labels
+    return labels_edges_fine
 
 def plot_features_importance(classifier):
     # Create a new figure with the desired size
@@ -104,6 +111,11 @@ def get_hard_disk_path(type):
         paths = [
             "D:/data_for_seg_without_dead/",
             "E:/data_for_seg_without_dead/"
+        ]
+    elif type == "segmentation_new_data":
+        paths = [
+            "D:/New_data_Maxim/croped_images/",
+            "E:/New_data_Maxim/croped_images/"
         ]
 
     actual_path = None
@@ -173,15 +185,18 @@ def load_data(path, csv_name):
     return X, y, unique_labels, label_mapping, data
 
 
-def train_model(X_train, y_train, unique_labels, model, random_state=42):
+def train_model(X_train, y_train, unique_labels, model, best_params=None, random_state=42):
     if model == "RandomForest":
-        best_params = {'max_depth': 6, 'min_samples_leaf': 2, 'min_samples_split': 7, 'n_estimators': 65}
+        if best_params == None:
+            best_params = {'max_depth': 6, 'min_samples_leaf': 2, 'min_samples_split': 7, 'n_estimators': 65}
         classifier = RandomForestClassifier(**best_params, random_state=random_state)
     elif model == "Xgboost":
-        best_params = {'colsample_bytree': 0.3064379361316407, 'learning_rate': 0.030294308573206426, 'max_depth': 5, 'n_estimators': 252}
+        if best_params == None:
+            best_params = {'colsample_bytree': 0.3064379361316407, 'learning_rate': 0.030294308573206426, 'max_depth': 5, 'n_estimators': 252}
         classifier = xgb.XGBClassifier(objective='multi:softmax', num_class=len(unique_labels), **best_params, random_state=random_state)
     elif model == "Catboost":
-        best_params = {"learning_rate": 0.03514033339475594, "depth": 4, "subsample": 0.6983280497870886, "colsample_bylevel": 0.4327452011540816, "min_data_in_leaf": 12}
+        if best_params == None:
+            best_params = {"learning_rate": 0.03514033339475594, "depth": 4, "subsample": 0.6983280497870886, "colsample_bylevel": 0.4327452011540816, "min_data_in_leaf": 12}
         classifier = CatBoostClassifier(iterations=1000, bootstrap_type="Bernoulli", verbose=False, **best_params, random_state=random_state)
     sample_weights = compute_sample_weight(class_weight='balanced', y=y_train)
     classifier.fit(X_train, y_train, sample_weight=sample_weights)

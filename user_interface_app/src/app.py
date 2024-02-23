@@ -16,7 +16,7 @@ from layouts import main_layout
 from utils import utils
 
 num_columns = 12
-num_rows = 10
+num_rows = 8
 size_ratio = 5/np.log(num_columns*num_rows)
 
 # Initialize the Dash app
