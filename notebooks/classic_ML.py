@@ -75,7 +75,6 @@ def perform_stratified_kfold_analysis(data_path, data_file, model_type, best_par
     average_f1_scores = {label: score/n_splits for label, score in cumulative_f1_scores.items()} 
     ranked_labels = sorted(average_f1_scores, key=average_f1_scores.get, reverse=True)
     plot_average_f1_scores(ranked_labels, average_f1_scores)
-    plot_features_importance(classifier)
 
     return average_f1_scores, classifier
 
@@ -155,7 +154,7 @@ def tune_and_evaluate_xgb_classifier(data_path, data_file, test_size=0.2, random
     test_f1_score = f1_score(y_test, predictions, average='weighted')  # Use 'weighted' to account for label imbalance
     print("Test F1-score: ", test_f1_score)
 
-    return best_model, test_f1_score
+    return random_search.best_params_, test_f1_score
 
 def objective(trial, X_train, y_train, X_test, y_test):
     params = {
@@ -221,7 +220,7 @@ def optimize_catboost_with_optuna(data_path, data_file, test_size=0.2, random_st
     for key, value in trial.params.items():
         print(f"{key}: {value}")
 
-    return study.best_trial
+    return study.best_trial.params
 
 def optimize_and_evaluate_random_forest(data_path, data_file, random_state=30):
     """
