@@ -1,0 +1,45 @@
+name: C:\Users\lguertle\AppData\Local\anaconda3\envs\annotation_app
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - bzip2=1.0.8=hcfcfb64_5
+  - ca-certificates=2023.11.17=h56e8100_0
+  - libexpat=2.5.0=h63175ca_1
+  - libffi=3.4.2=h8ffe710_5
+  - libsqlite=3.44.2=hcfcfb64_0
+  - libzlib=1.2.13=hcfcfb64_5
+  - openssl=3.2.0=hcfcfb64_1
+  - pip=23.3.2=pyhd8ed1ab_0
+  - python=3.12.0=h2628c8c_0_cpython
+  - setuptools=68.2.2=pyhd8ed1ab_0
+  - tk=8.6.13=h5226925_1
+  - tzdata=2023c=h71feb2d_0
+  - ucrt=10.0.22621.0=h57928b3_0
+  - vc=14.3=hcf57466_18
+  - vc14_runtime=14.38.33130=h82b7239_18
+  - vs2015_runtime=14.38.33130=hcb4865c_18
+  - wheel=0.42.0=pyhd8ed1ab_0
+  - xz=5.2.6=h8d14728_0
+  - pip:
+      - altgraph==0.17.4
+      - auto-py-to-exe==2.42.0
+      - bottle==0.12.25
+      - bottle-websocket==0.2.9
+      - cffi==1.16.0
+      - eel==0.16.0
+      - future==0.18.3
+      - gevent==23.9.1
+      - gevent-websocket==0.10.1
+      - greenlet==3.0.2
+      - packaging==23.2
+      - pefile==2023.2.7
+      - pycparser==2.21
+      - pyinstaller==6.3.0
+      - pyinstaller-hooks-contrib==2023.10
+      - pyparsing==3.1.1
+      - pywin32-ctypes==0.2.2
+      - whichcraft==0.6.1
+      - zope-event==5.0
+      - zope-interface==6.1
+prefix: C:\Users\lguertle\AppData\Local\anaconda3\envs\annotation_app
