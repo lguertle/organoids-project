@@ -7,7 +7,7 @@ This project develops an automated system for classifying and monitoring the gro
 ## Workflow Overview  
 The project integrates advanced imaging and machine learning techniques. Below is an example of the proposed workflow:  
 
-![Workflow Diagram](docs/pipeline.png)  
+![Workflow Diagram](docs/Pipeline.png)  
 
 ## Segmentation  
 Comparison of organoid segmentation using different methods: CellPose vs IP:  
