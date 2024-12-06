@@ -17,7 +17,7 @@ Comparison of organoid segmentation using different methods: CellPose vs IP:
 ## Results  
 Comparison of average F1-scores and sample size per class label for Classic ML and Deep Learning models:  
 
-![Comparison of F1-Scores](docs/deep_learning_vs_classic_ML.png)
+![Comparison of F1-Scores](docs/Deep_learning_vs_classic_ML.png)
 
 ## Features  
 - **Organoid Classification**: Automated classification of organoid growth stages using machine learning and deep learning models.  
