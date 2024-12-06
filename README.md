@@ -7,12 +7,17 @@ This project develops an automated system for classifying and monitoring the gro
 ## Workflow Overview  
 The project integrates advanced imaging and machine learning techniques. Below is an example of the proposed workflow:  
 
-![Workflow Diagram](docs/workflow_diagram.png)  
+![Workflow Diagram](docs/Pipeline.png)  
+
+## Segmentation  
+Comparison of organoid segmentation using different methods: CellPose vs IP:  
+
+![Comparison of Organoid Segmentation](docs/Example_CellPose_vs_IP.png)
 
 ## Results  
-An example of organoid segmentation using CellPose:  
+Comparison of average F1-scores and sample size per class label for Classic ML and Deep Learning models:  
 
-![Organoid Segmentation](docs/organoid_segmentation.png)  
+![Comparison of F1-Scores](docs/deep_learning_vs_classic_ML.png)
 
 ## Features  
 - **Organoid Classification**: Automated classification of organoid growth stages using machine learning and deep learning models.  
