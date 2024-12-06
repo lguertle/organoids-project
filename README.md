@@ -46,7 +46,7 @@ Comparison of average F1-scores and sample size per class label for Classic ML a
 This project is released under the MIT License.
 
 ## Contact
-Created by Laurent Gürtler.
+Created by Laurent Gürtler in collaboration with AGORA Cancer Research Center, under the supervision of Gaspard Pardon.
 For inquiries, please email at laurent.guertler@gmail.com.
 
 ## Disclaimer
